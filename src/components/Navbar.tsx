@@ -1,0 +1,72 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
+
+const navItems = [
+  { label: "대시보드", sub: "Dashboard", href: "/dashboard" },
+  { label: "검토", sub: "Review", href: "/review" },
+  { label: "생성", sub: "Generate", href: "/generate" },
+  { label: "히스토리", sub: "History", href: "/history" },
+];
+
+export default function Navbar() {
+  const pathname = usePathname();
+
+  return (
+    <header className="sticky top-0 z-50 bg-white border-b border-[#E5E7EB] h-[56px] flex items-center px-6">
+      <div className="flex items-center gap-6 w-full h-full">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[#2F6BFF] flex items-center justify-center text-white font-bold text-sm select-none">
+            A
+          </div>
+          <span className="font-bold text-[15px] text-[#111]">AdGuard</span>
+          <span className="text-[10px] font-semibold text-[#6B7280] border border-[#E5E7EB] rounded px-1.5 py-0.5">
+            BETA
+          </span>
+        </Link>
+
+        {/* Nav links */}
+        <nav className="flex items-stretch h-full">
+          {navItems.map((item) => {
+            const active =
+              pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={clsx(
+                  "px-4 flex flex-col items-center justify-center border-b-2 transition-colors",
+                  active
+                    ? "border-[#2F6BFF] text-[#111]"
+                    : "border-transparent text-[#6B7280] hover:text-[#111]"
+                )}
+              >
+                <span className={clsx("text-[13px] leading-tight", active ? "font-semibold" : "font-medium")}>
+                  {item.label}
+                </span>
+                <span className="text-[10px] leading-tight text-[#9CA3AF]">
+                  {item.sub}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right side */}
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-[12px] text-[#6B7280]">
+            <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block" />
+            지식베이스 동기화&nbsp;
+            <span className="text-[#111] font-medium">2분 전</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-[#2F6BFF] flex items-center justify-center text-white text-[12px] font-bold cursor-pointer select-none">
+            JK
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
