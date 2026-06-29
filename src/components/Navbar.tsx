@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const navItems = [
-  { label: "대시보드", sub: "Dashboard", href: "/dashboard" },
-  { label: "검토", sub: "Review", href: "/review" },
-  { label: "생성", sub: "Generate", href: "/generate" },
-  { label: "히스토리", sub: "History", href: "/history" },
+  { label: "대시보드", href: "/dashboard" },
+  { label: "검토", href: "/review" },
+  { label: "생성", href: "/generate" },
+  { label: "히스토리", href: "/history" },
 ];
 
 export default function Navbar() {
@@ -44,11 +44,8 @@ export default function Navbar() {
                     : "border-transparent text-[#6B7280] hover:text-[#111]"
                 )}
               >
-                <span className={clsx("text-[13px] leading-tight", active ? "font-semibold" : "font-medium")}>
+                <span className={clsx("text-[13px]", active ? "font-semibold" : "font-medium")}>
                   {item.label}
-                </span>
-                <span className="text-[10px] leading-tight text-[#9CA3AF]">
-                  {item.sub}
                 </span>
               </Link>
             );
@@ -59,7 +56,7 @@ export default function Navbar() {
         <div className="ml-auto flex items-center gap-4">
           <div className="flex items-center gap-1.5 text-[12px] text-[#6B7280]">
             <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block" />
-            지식베이스 동기화&nbsp;
+            데이터 업데이트&nbsp;
             <span className="text-[#111] font-medium">2분 전</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-[#2F6BFF] flex items-center justify-center text-white text-[12px] font-bold cursor-pointer select-none">

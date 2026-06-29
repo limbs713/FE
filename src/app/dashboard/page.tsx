@@ -80,7 +80,7 @@ export default function DashboardPage() {
         {/* 추적 중 사건 */}
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
           <div className="flex justify-between items-start mb-3">
-            <span className="text-[12px] text-[#6B7280] font-medium">추적 중 사건</span>
+            <span className="text-[12px] text-[#6B7280] font-medium">민감 사건</span>
             <span className="text-[12px] font-semibold text-[#6B7280]">+2</span>
           </div>
           <div className="flex items-baseline gap-1 mb-1">
@@ -93,7 +93,7 @@ export default function DashboardPage() {
         {/* 매핑된 논란 광고 */}
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
           <div className="flex justify-between items-start mb-3">
-            <span className="text-[12px] text-[#6B7280] font-medium">매핑된 논란 광고</span>
+            <span className="text-[12px] text-[#6B7280] font-medium">논란 광고</span>
             <span className="text-[12px] font-semibold text-[#6B7280]">+11</span>
           </div>
           <div className="flex items-baseline gap-1 mb-1">
