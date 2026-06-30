@@ -6,6 +6,7 @@ import {
   Line,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -19,28 +20,24 @@ import {
   type TrendItem,
 } from "@/lib/api";
 
-// 주간 시계열은 BE에 스냅샷 소스가 아직 없어 정적 디자인 데이터로 유지한다.
-const trendData = [
-  { week: "W1", 갓생: 60, 물멍: 50, 알빠노: 45, "700": 55 },
-  { week: "W2", 갓생: 62, 물멍: 53, 알빠노: 47, "700": 58 },
-  { week: "W3", 갓생: 65, 물멍: 55, 알빠노: 48, "700": 61 },
-  { week: "W4", 갓생: 68, 물멍: 57, 알빠노: 50, "700": 65 },
-  { week: "W5", 갓생: 70, 물멍: 59, 알빠노: 52, "700": 68 },
-  { week: "W6", 갓생: 72, 물멍: 60, 알빠노: 53, "700": 71 },
-  { week: "W7", 갓생: 73, 물멍: 62, 알빠노: 54, "700": 74 },
-  { week: "W8", 갓생: 75, 물멍: 63, 알빠노: 55, "700": 77 },
-  { week: "W9", 갓생: 77, 물멍: 65, 알빠노: 56, "700": 80 },
-  { week: "W10", 갓생: 80, 물멍: 67, 알빠노: 57, "700": 83 },
-  { week: "W11", 갓생: 83, 물멍: 69, 알빠노: 58, "700": 87 },
-  { week: "W12", 갓생: 85, 물멍: 72, 알빠노: 60, "700": 91 },
-];
+// 라인차트 색상 팔레트(활성도 상위 신조어에 순서대로 매핑).
+const LINE_PALETTE = ["#2F6BFF", "#F59E0B", "#22C55E", "#EF4444"];
 
-const LINE_COLORS: Record<string, string> = {
-  "700": "#F59E0B",
-  갓생: "#2F6BFF",
-  물멍: "#22C55E",
-  알빠노: "#EF4444",
-};
+// 라인차트에 표시할 신조어 개수(활성도 상위 N).
+const TOP_LINES = 4;
+
+// toWeekly 는 90일 일별 검색비율 배열을 주 단위 평균(반올림)으로 다운샘플한다.
+// 배열의 끝이 최신일이며, 결과의 끝이 이번 주가 된다.
+function toWeekly(ratios: number[]): number[] {
+  const weeks: number[] = [];
+  for (let i = 0; i < ratios.length; i += 7) {
+    const chunk = ratios.slice(i, i + 7);
+    if (chunk.length === 0) break;
+    const sum = chunk.reduce((s, v) => s + v, 0);
+    weeks.push(Math.round(sum / chunk.length));
+  }
+  return weeks;
+}
 
 const RANK_BAR_COLORS = ["#F59E0B", "#2F6BFF", "#22C55E", "#A78BFA", "#6B7280", "#6B7280", "#6B7280", "#6B7280"];
 
@@ -51,7 +48,7 @@ function levelColor(level: string): string {
   return "#9CA3AF";
 }
 
-// delta(전주 대비) 표기. BE 시계열 미도입으로 현재는 0 → "–".
+// delta(최근 7일 평균 vs 직전 7일 평균 검색비율 변화) 표기. 0이면 "–".
 function deltaLabel(delta: number): { text: string; color: string } {
   if (delta > 0) return { text: `▲${delta}`, color: "#22C55E" };
   if (delta < 0) return { text: `▼${Math.abs(delta)}`, color: "#EF4444" };
@@ -99,6 +96,22 @@ export default function DashboardPage() {
 
   const issueTotal = events.reduce((sum, e) => sum + e.issue_count, 0);
   const maxUp = Math.max(1, ...trends.map((t) => t.up));
+
+  // 라인차트용: 활성도 상위 TOP_LINES 개를 주 단위 시계열로 변환.
+  const topTrends = trends.slice(0, TOP_LINES);
+  const lineWords = topTrends.map((t) => t.tag.replace(/^#/, ""));
+  const weeklySeries = topTrends.map((t) => toWeekly(t.ratios ?? []));
+  const weekCount = weeklySeries.reduce((m, w) => Math.max(m, w.length), 0);
+  const chartData = Array.from({ length: weekCount }, (_, i) => {
+    const weeksAgo = weekCount - 1 - i;
+    const point: Record<string, number | string> = {
+      week: weeksAgo === 0 ? "이번주" : `${weeksAgo}주 전`,
+    };
+    lineWords.forEach((w, idx) => {
+      point[w] = weeklySeries[idx][i] ?? 0;
+    });
+    return point;
+  });
 
   return (
     <div className="max-w-[900px] mx-auto px-6 py-8">
@@ -192,12 +205,15 @@ export default function DashboardPage() {
                 NAVER DataLab
               </span>
             </div>
-            <p className="text-[12px] text-[#9CA3AF]">검색 트렌드 기반 활성도 지수 · 최근 12주</p>
+            <p className="text-[12px] text-[#9CA3AF]">검색 트렌드 기반 활성도 추이 · 최근 90일(주 단위)</p>
           </div>
-          <div className="flex gap-4 text-[12px] text-[#6B7280]">
-            {Object.entries(LINE_COLORS).map(([name, color]) => (
+          <div className="flex gap-4 text-[12px] text-[#6B7280] flex-wrap justify-end">
+            {lineWords.map((name, idx) => (
               <span key={name} className="flex items-center gap-1.5">
-                <span className="w-4 h-0.5 inline-block rounded-full" style={{ backgroundColor: color }} />
+                <span
+                  className="w-4 h-0.5 inline-block rounded-full"
+                  style={{ backgroundColor: LINE_PALETTE[idx % LINE_PALETTE.length] }}
+                />
                 {name}
               </span>
             ))}
@@ -205,43 +221,58 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex gap-6">
-          {/* Line chart (정적 디자인 데이터) */}
+          {/* Line chart — mim_terms.search_ratios_90d (주 단위) */}
           <div className="flex-1 h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                <XAxis
-                  dataKey="week"
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
-                  axisLine={false}
-                  tickLine={false}
-                  domain={[20, 100]}
-                />
-                <Tooltip
-                  contentStyle={{
-                    fontSize: 12,
-                    borderRadius: 8,
-                    border: "1px solid #E5E7EB",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                  }}
-                />
-                {Object.entries(LINE_COLORS).map(([name, color]) => (
-                  <Line
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={color}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4 }}
+            {loading ? (
+              <div className="h-full flex items-center justify-center text-[12px] text-[#9CA3AF]">
+                불러오는 중…
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-[12px] text-[#9CA3AF]">
+                데이터 없음
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
+                  <CartesianGrid vertical={false} stroke="#F3F4F6" />
+                  <XAxis
+                    dataKey="week"
+                    tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={20}
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+                  <YAxis
+                    tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                    axisLine={false}
+                    tickLine={false}
+                    domain={[0, 100]}
+                    ticks={[0, 25, 50, 75, 100]}
+                    width={36}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      fontSize: 12,
+                      borderRadius: 8,
+                      border: "1px solid #E5E7EB",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                    }}
+                  />
+                  {lineWords.map((name, idx) => (
+                    <Line
+                      key={name}
+                      type="monotone"
+                      dataKey={name}
+                      stroke={LINE_PALETTE[idx % LINE_PALETTE.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Ranking — 실데이터(/trends) */}
@@ -259,25 +290,34 @@ export default function DashboardPage() {
                   const term = t.tag.replace(/^#/, "");
                   const d = deltaLabel(t.delta);
                   return (
-                    <div key={t.tag} className="flex items-center gap-2">
+                    <div
+                      key={t.tag}
+                      className="group relative flex items-center gap-2 cursor-help"
+                    >
                       <span className="text-[11px] text-[#9CA3AF] w-3 shrink-0">{t.rank || i + 1}</span>
                       <span className="text-[12px] font-medium text-[#111] w-12 shrink-0 truncate">{term}</span>
                       <div className="flex-1 h-[6px] bg-[#F3F4F6] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all"
                           style={{
-                            width: `${Math.round((t.up / maxUp) * 100)}%`,
+                            width: `${Math.max(0, Math.min(100, Math.round((t.up / maxUp) * 100)))}%`,
                             backgroundColor: RANK_BAR_COLORS[i] ?? "#6B7280",
                           }}
                         />
                       </div>
-                      <span className="text-[12px] font-bold text-[#111] w-6 text-right shrink-0">{t.up}</span>
+                      <span className="text-[12px] font-bold text-[#111] w-8 text-right shrink-0">{t.up.toFixed(1)}</span>
                       <span
                         className="text-[11px] font-semibold w-8 text-right shrink-0"
                         style={{ color: d.color }}
                       >
                         {d.text}
                       </span>
+                      {t.definition && (
+                        <div className="pointer-events-none absolute right-0 bottom-full z-20 mb-1.5 hidden w-[240px] rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[11px] leading-[1.6] text-[#6B7280] shadow-lg group-hover:block">
+                          <span className="block font-bold text-[#111] mb-0.5">{term}</span>
+                          {t.definition}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

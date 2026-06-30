@@ -141,9 +141,6 @@ function RelatedGroup({
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-[12px] font-semibold text-[#111] truncate">{it.title}</span>
-              <span className="text-[10px] font-bold shrink-0" style={{ color }}>
-                {Math.round(it.similarity * 100)}%
-              </span>
             </div>
             {it.snippet && <p className="text-[11px] text-[#9CA3AF] mt-0.5 truncate">{it.snippet}</p>}
           </div>
@@ -217,16 +214,11 @@ export default function ReviewResultPage() {
   return (
     <div className="max-w-[900px] mx-auto px-6 py-8">
       {/* ── Page header ── */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[11px] text-[#9CA3AF] font-semibold tracking-widest mb-1 uppercase">
+          <p className="text-[11px] text-[#9CA3AF] font-semibold tracking-widest uppercase">
             Review Result · {id?.slice(0, 10)}
           </p>
-          <h1 className="text-[22px] font-black text-[#111]">
-            {result.verdict.advice
-              ? result.verdict.advice.slice(0, 40)
-              : result.input.slice(0, 40)}
-          </h1>
         </div>
         <div className="flex bg-[#F3F4F6] rounded-lg p-1 gap-0.5 shrink-0">
           {tabs.map((t) => (
@@ -506,9 +498,6 @@ export default function ReviewResultPage() {
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: evidence.groupColor }} />
                 <span className="text-[12px] font-bold" style={{ color: evidence.groupColor }}>
                   {evidence.groupTitle}
-                </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded text-white" style={{ background: evidence.groupColor }}>
-                  유사도 {Math.round(evidence.similarity * 100)}%
                 </span>
               </div>
               <button

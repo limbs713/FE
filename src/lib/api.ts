@@ -69,12 +69,15 @@ export type StatCard = {
   sub: string;
 };
 
+// mim_terms 기반 활성도 한 건 (GET /trends).
 export type TrendItem = {
   tag: string;
   category: string;
-  up: number;
+  definition: string; // 신조어 설명 (mim_terms.definition)
+  up: number; // trend_score (활성도 점수, 음수 가능)
   rank: number;
-  delta: number;
+  delta: number; // 최근 7일 평균 - 직전 7일 평균(search_ratios_90d 기반)
+  ratios: number[]; // search_ratios_90d (최근 90일 일별 검색비율 0~100)
 };
 
 export type GenerateCandidate = {
