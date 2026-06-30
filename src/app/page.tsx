@@ -38,7 +38,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2 bg-white border border-[#E5E7EB] rounded-full px-4 py-2 mb-12 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[#EF4444] inline-block shrink-0" />
             <span className="text-[13px] text-[#555]">
-              광고가 나가기 <strong className="text-[#111]">전에</strong> , 사고를 거른다
+              광고가 나가기 <strong className="text-[#111]">전에</strong> , 사고를 막는다
             </span>
           </div>
         </Reveal>
