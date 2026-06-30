@@ -43,8 +43,6 @@ const LINE_COLORS: Record<string, string> = {
 
 const RANK_BAR_COLORS = ["#F59E0B", "#2F6BFF", "#22C55E", "#A78BFA", "#6B7280", "#6B7280", "#6B7280", "#6B7280"];
 
-const periods = ["7일", "30일", "90일"];
-
 // 전례의 위험도(level) 한국어 값 → 색상. 운영 DB에 level 원천이 없어 비어 있을 수 있다.
 function levelColor(level: string): string {
   if (level.includes("위험")) return "#EF4444";
@@ -60,8 +58,6 @@ function deltaLabel(delta: number): { text: string; color: string } {
 }
 
 export default function DashboardPage() {
-  const [period, setPeriod] = useState("30일");
-
   const [events, setEvents] = useState<EventListItem[]>([]);
   const [eventTotal, setEventTotal] = useState(0);
   const [trends, setTrends] = useState<TrendItem[]>([]);
@@ -110,23 +106,8 @@ export default function DashboardPage() {
       </p>
 
       {/* Title row */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-[26px] font-black text-[#111]">광고 리스크 한눈에 보기</h1>
-        <div className="flex bg-[#F3F4F6] rounded-lg p-1 gap-0.5">
-          {periods.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1 rounded-md text-[13px] font-medium transition-colors ${
-                period === p
-                  ? "bg-white text-[#111] shadow-sm"
-                  : "text-[#6B7280] hover:text-[#111]"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
       </div>
 
       {error && (
@@ -315,7 +296,7 @@ export default function DashboardPage() {
 
         <div className="flex gap-4">
           {/* Incident list */}
-          <div className="w-[260px] shrink-0 bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+          <div className="w-[260px] shrink-0 self-start bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
             {loading ? (
               <p className="text-[12px] text-[#9CA3AF] px-4 py-3">불러오는 중…</p>
             ) : events.length === 0 ? (

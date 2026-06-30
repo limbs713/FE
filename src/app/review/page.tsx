@@ -42,6 +42,7 @@ export default function ReviewPage() {
     setIsLoading(true);
     try {
       let reviewText = text;
+      let isImage = false;
       // OCR 탭: 이미지를 업로드해 CLOVA OCR 로 텍스트를 추출한 뒤 그 텍스트로 검토한다.
       if (inputTab === "ocr" && uploadedFile) {
         const uploaded = await uploadImage(uploadedFile);
@@ -52,8 +53,10 @@ export default function ReviewPage() {
           return;
         }
         reviewText = extracted;
+        isImage = true;
       }
-      const result = await postReview(reviewText);
+      // 출처가 이미지(OCR)면 BE에 source 를 알려 히스토리에 "이미지"로 기록되게 한다.
+      const result = await postReview(reviewText, isImage ? "image" : undefined);
       router.push(`/review/${result.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "검토 요청에 실패했습니다.");
@@ -76,7 +79,7 @@ export default function ReviewPage() {
       <div className="flex gap-0 mb-5 border-b border-[#E5E7EB]">
         {([
           { id: "text", label: "문구 입력" },
-          { id: "ocr", label: "OCR 업로드" },
+          { id: "ocr", label: "이미지 업로드" },
         ] as { id: InputTab; label: string }[]).map((tab) => (
           <button
             key={tab.id}

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getEvents, getEventDetail, uploadImage } from "./api";
+import { getEvents, getEventDetail, postReview, uploadImage } from "./api";
 
 const BASE = "http://localhost:8080";
 
@@ -113,5 +113,55 @@ describe("uploadImage", () => {
     );
 
     await expect(uploadImage(file)).rejects.toThrow("Bad Gateway");
+  });
+});
+
+describe("postReview", () => {
+  const review = { id: "r1", input: "문구" };
+
+  function parseBody(spy: ReturnType<typeof mockFetch>) {
+    const init = spy.mock.calls[0][1];
+    return JSON.parse(init?.body as string);
+  }
+
+  it("source 없이 호출하면 body 에 text 만 담아 /review 로 POST 한다", async () => {
+    const spy = mockFetch(() => jsonResponse(review));
+
+    const result = await postReview("문구");
+
+    const [url, init] = spy.mock.calls[0];
+    expect(url).toBe(`${BASE}/review`);
+    expect(init?.method).toBe("POST");
+    expect(parseBody(spy)).toEqual({ text: "문구" });
+    expect(result).toEqual(review);
+  });
+
+  it("source='image' 를 전달하면 body 에 text 와 source 를 함께 담는다", async () => {
+    const spy = mockFetch(() => jsonResponse(review));
+
+    await postReview("문구", "image");
+
+    expect(parseBody(spy)).toEqual({ text: "문구", source: "image" });
+  });
+
+  it("실패 응답의 error 메시지를 추출해 throw 한다", async () => {
+    mockFetch(() => jsonResponse({ error: "검토 실패" }, { ok: false, statusText: "Bad Request" }));
+
+    await expect(postReview("문구")).rejects.toThrow("검토 실패");
+  });
+
+  it("실패 응답 본문이 JSON 이 아니면 statusText 로 fallback 한다", async () => {
+    mockFetch(
+      () =>
+        ({
+          ok: false,
+          statusText: "Service Unavailable",
+          json: async () => {
+            throw new Error("invalid json");
+          },
+        }) as unknown as Response
+    );
+
+    await expect(postReview("문구")).rejects.toThrow("Service Unavailable");
   });
 });

@@ -56,9 +56,6 @@ export default function Navbar() {
             데이터 업데이트&nbsp;
             <span className="text-[#111] font-medium">2분 전</span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-[#2F6BFF] flex items-center justify-center text-white text-[12px] font-bold cursor-pointer select-none">
-            JK
-          </div>
         </div>
       </div>
     </header>

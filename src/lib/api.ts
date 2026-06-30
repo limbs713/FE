@@ -57,7 +57,7 @@ export type HistoryItem = {
   date: string;
   title: string;
   snippet: string;
-  src: "text" | "generate";
+  src: "text" | "generate" | "image";
   status: "reviewed" | "needs_review";
   score: number;
 };
@@ -115,11 +115,15 @@ export type EventDetail = {
   issues: EventIssue[];
 };
 
-export async function postReview(text: string): Promise<ReviewResult> {
+// source 는 검토 입력의 출처(예: "image" = OCR 업로드)를 BE에 알려 히스토리 src 에 반영시킨다.
+export async function postReview(
+  text: string,
+  source?: "image"
+): Promise<ReviewResult> {
   const res = await fetch(`${BASE}/review`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(source ? { text, source } : { text }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
