@@ -123,7 +123,7 @@ export default function ReviewPage() {
               <div className="flex-1">
                 <p className="text-[13px] font-medium text-[#111]">{uploadedFile.name}</p>
                 <p className="text-[11px] text-[#9CA3AF]">
-                  {(uploadedFile.size / 1024).toFixed(0)} KB · OCR 추출 후 검토
+                  {(uploadedFile.size / 1024).toFixed(0)} KB · 문구 추출 후 검토
                 </p>
               </div>
               <button
@@ -192,7 +192,7 @@ export default function ReviewPage() {
       </button>
 
       <p className="text-[12px] text-[#9CA3AF] text-center mt-4">
-        검토 결과는 약 3–5초 내에 제공됩니다. 최종 판단은 사람이 확인하세요.
+        검토 결과는 4초 ~ 최대 8초 내에 제공됩니다.
       </p>
     </div>
   );

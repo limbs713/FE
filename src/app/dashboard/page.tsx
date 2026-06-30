@@ -15,6 +15,7 @@ import {
   getTrends,
   type EventListItem,
   type EventDetail,
+  type EventIssue,
   type TrendItem,
 } from "@/lib/api";
 
@@ -67,6 +68,7 @@ export default function DashboardPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<EventDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<EventIssue | null>(null);
 
   // 최초 로드: 사건 목록(전체) + 활성도 랭킹 TOP 8
   useEffect(() => {
@@ -335,7 +337,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Selected incident detail */}
-          <div className="flex-1 bg-white rounded-xl border border-[#E5E7EB] p-5">
+          <div className="flex-1 min-w-0 bg-white rounded-xl border border-[#E5E7EB] p-5">
             {detailLoading || !detail ? (
               <p className="text-[13px] text-[#9CA3AF]">
                 {detailLoading ? "상세 불러오는 중…" : "사건을 선택하세요"}
@@ -354,7 +356,12 @@ export default function DashboardPage() {
                       )}
                       {detail.year && <span className="text-[12px] text-[#9CA3AF]">{detail.year}</span>}
                     </div>
-                    <p className="text-[13px] text-[#6B7280] leading-relaxed">{detail.description}</p>
+                    <p
+                      className="text-[13px] text-[#6B7280] leading-[1.85]"
+                      style={{ wordBreak: "keep-all", textWrap: "pretty" }}
+                    >
+                      {detail.description}
+                    </p>
                   </div>
                 </div>
 
@@ -366,13 +373,14 @@ export default function DashboardPage() {
                   <p className="text-[13px] text-[#9CA3AF] py-4 text-center">연결된 논란 광고가 없습니다.</p>
                 ) : (
                   <div className="space-y-2">
-                    {detail.issues.map((ad) => (
-                      <div
+                    {detail.issues.map((ad, i) => (
+                      <button
                         key={ad.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-[#F3F4F6] bg-[#FAFAFA]"
+                        onClick={() => setSelectedIssue(ad)}
+                        className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-[#F3F4F6] bg-[#FAFAFA] hover:bg-[#F0F5FF] hover:border-[#D6E4FF] transition-colors cursor-pointer"
                       >
-                        <div className="w-9 h-9 rounded-lg bg-[#E5E7EB] shrink-0 flex items-center justify-center text-[11px] font-bold text-[#6B7280]">
-                          {ad.brand.split(" ")[0]?.slice(0, 2) || "?"}
+                        <div className="w-6 h-6 rounded-full bg-white border border-[#E5E7EB] shrink-0 flex items-center justify-center text-[11px] font-bold text-[#9CA3AF]">
+                          {i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -392,8 +400,9 @@ export default function DashboardPage() {
                             </span>
                           )}
                           {ad.result && <span className="text-[11px] text-[#9CA3AF]">{ad.result}</span>}
+                          <span className="text-[#D1D5DB] text-[15px] leading-none">›</span>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -402,6 +411,64 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 논란 광고 사례 전문 모달 */}
+      {selectedIssue && (
+        <div
+          onClick={() => setSelectedIssue(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xl max-w-[640px] w-full max-h-[85vh] overflow-y-auto p-7"
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="w-2 h-2 rounded-full bg-[#EF4444] shrink-0" />
+                {selectedIssue.year && (
+                  <span className="text-[12px] font-bold text-[#6B7280]">{selectedIssue.year}</span>
+                )}
+                {selectedIssue.level && (
+                  <span
+                    className="text-[11px] font-bold px-2 py-0.5 rounded"
+                    style={{ color: levelColor(selectedIssue.level), background: levelColor(selectedIssue.level) + "18" }}
+                  >
+                    {selectedIssue.level}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedIssue(null)}
+                className="text-[#9CA3AF] hover:text-[#111] text-[20px] leading-none shrink-0"
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+            <h3
+              className="text-[18px] font-black text-[#111] mb-3 leading-snug"
+              style={{ wordBreak: "keep-all", textWrap: "balance" }}
+            >
+              {selectedIssue.brand}
+            </h3>
+            {(selectedIssue.campaign || selectedIssue.result) && (
+              <p className="text-[12px] text-[#9CA3AF] mb-3">
+                {[selectedIssue.campaign, selectedIssue.result].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {selectedIssue.copy ? (
+              <p
+                className="text-[14px] text-[#374151] leading-[1.9] whitespace-pre-wrap border-t border-[#F3F4F6] pt-4"
+                style={{ wordBreak: "keep-all", textWrap: "pretty" }}
+              >
+                {selectedIssue.copy}
+              </p>
+            ) : (
+              <p className="text-[13px] text-[#9CA3AF] border-t border-[#F3F4F6] pt-4">상세 설명이 없습니다.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
